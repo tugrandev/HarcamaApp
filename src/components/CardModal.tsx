@@ -5,19 +5,69 @@ import Modal from 'react-native-modal';
 type CardModalProps = {
   visible: boolean;
   onClose: () => void;
+  type: string;
+  account_type: string;
   title: string;
   description: string;
   amount: string;
-  onSave: (title: string, description: string, amount: string) => void;
+  currency: string;
+  repeat_frequency: string;
+  date: string;
+  note: string;
+  category: string;
+  onSave: (
+    type: string,
+    account_type: string,
+    title: string,
+    description: string,
+    amount: string,
+    currency: string,
+    repeat_frequency: string,
+    date: string,
+    note: string,
+    category: string
+  ) => void;
 };
 
-const CardModal = ({ visible, onClose, title, description, amount, onSave }: CardModalProps) => {
+const CardModal: React.FC<CardModalProps> = ({
+  visible,
+  onClose,
+  type,
+  account_type,
+  title,
+  description,
+  amount,
+  currency,
+  repeat_frequency,
+  date,
+  note,
+  category,
+  onSave
+}) => {
+  const [editType, setEditType] = useState(type);
+  const [editAccountType, setEditAccountType] = useState(account_type);
   const [editTitle, setEditTitle] = useState(title);
   const [editDescription, setEditDescription] = useState(description);
   const [editAmount, setEditAmount] = useState(amount);
+  const [editCurrency, setEditCurrency] = useState(currency);
+  const [editRepeatFrequency, setEditRepeatFrequency] = useState(repeat_frequency);
+  const [editDate, setEditDate] = useState(date);
+  const [editNote, setEditNote] = useState(note);
+  const [editCategory, setEditCategory] = useState(category);
 
   const handleSave = () => {
-    onSave(editTitle, editDescription, editAmount);
+    onSave(
+      editType,
+      editAccountType,
+      editTitle,
+      editDescription,
+      editAmount,
+      editCurrency,
+      editRepeatFrequency,
+      editDate,
+      editNote,
+      editCategory
+    );
     onClose();
   };
 
@@ -37,6 +87,18 @@ const CardModal = ({ visible, onClose, title, description, amount, onSave }: Car
           <View style={styles.handle} />
           <TextInput
             style={styles.input}
+            value={editType}
+            onChangeText={setEditType}
+            placeholder="Type"
+          />
+          <TextInput
+            style={styles.input}
+            value={editAccountType}
+            onChangeText={setEditAccountType}
+            placeholder="Account Type"
+          />
+          <TextInput
+            style={styles.input}
             value={editTitle}
             onChangeText={setEditTitle}
             placeholder="Title"
@@ -53,6 +115,36 @@ const CardModal = ({ visible, onClose, title, description, amount, onSave }: Car
             onChangeText={setEditAmount}
             placeholder="Amount"
             keyboardType="numeric"
+          />
+          <TextInput
+            style={styles.input}
+            value={editCurrency}
+            onChangeText={setEditCurrency}
+            placeholder="Currency"
+          />
+          <TextInput
+            style={styles.input}
+            value={editRepeatFrequency}
+            onChangeText={setEditRepeatFrequency}
+            placeholder="Repeat Frequency"
+          />
+          <TextInput
+            style={styles.input}
+            value={editDate}
+            onChangeText={setEditDate}
+            placeholder="Date"
+          />
+          <TextInput
+            style={styles.input}
+            value={editNote}
+            onChangeText={setEditNote}
+            placeholder="Note"
+          />
+          <TextInput
+            style={styles.input}
+            value={editCategory}
+            onChangeText={setEditCategory}
+            placeholder="Category"
           />
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>

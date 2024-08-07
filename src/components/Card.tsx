@@ -1,17 +1,54 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import CardModal from './CardModal';
+import { SvgProps } from 'react-native-svg';
+import CurrencyAmount from './CurrencyAmount'; // CurrencyAmount bileşenini import edin
+
+// SVG ikonlarınızı import edin
+import GelirIkonu from '../assets/images/icons/gelirikonu.svg';
+import GiderIkonu from '../assets/images/icons/giderikonu.svg';
 
 type CardProps = {
   id: number;
+  type: string;
+  account_type: string;
   title: string;
   description: string;
-  image: React.ComponentType<any>;
-  amount?: string;
-  onSave: (id: number, title: string, description: string, amount: string) => void;
+  amount: string;
+  currency: string;
+  repeat_frequency: string;
+  date: string;
+  note: string;
+  category: string;
+  onSave: (
+    id: number,
+    type: string,
+    account_type: string,
+    title: string,
+    description: string,
+    amount: string,
+    currency: string,
+    repeat_frequency: string,
+    date: string,
+    note: string,
+    category: string
+  ) => void;
 };
 
-const Card = ({ id, title, description, image: GelirGiderLogo, amount, onSave }: CardProps) => {
+const Card: React.FC<CardProps> = ({
+  id,
+  type,
+  account_type,
+  title,
+  description,
+  amount,
+  currency,
+  repeat_frequency,
+  date,
+  note,
+  category,
+  onSave
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handlePress = () => {
@@ -22,33 +59,67 @@ const Card = ({ id, title, description, image: GelirGiderLogo, amount, onSave }:
     setModalVisible(false);
   };
 
-  const handleSave = (newTitle, newDescription, newAmount) => {
-    onSave(id, newTitle, newDescription, newAmount);
+  const handleSave = (
+    newType: string,
+    newAccountType: string,
+    newTitle: string,
+    newDescription: string,
+    newAmount: string,
+    newCurrency: string,
+    newRepeatFrequency: string,
+    newDate: string,
+    newNote: string,
+    newCategory: string
+  ) => {
+    onSave(
+      id,
+      newType,
+      newAccountType,
+      newTitle,
+      newDescription,
+      newAmount,
+      newCurrency,
+      newRepeatFrequency,
+      newDate,
+      newNote,
+      newCategory
+    );
+    setModalVisible(false); // Modal'ı kapat
   };
+
+  // Gelir veya gider türüne göre ikonu seçin
+  const IconComponent = type === 'Gelir' ? GelirIkonu : GiderIkonu;
 
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={handlePress}>
-        <View style={styles.GelirGiderLogoContainer}>
-          <GelirGiderLogo style={styles.GelirGiderLogoImage} />
+        <View style={styles.imageContainer}>
+          <IconComponent width={40} height={40} />
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.description} numberOfLines={1} ellipsizeMode="tail">
-            {description}
+            {note}
           </Text>
         </View>
-        <View style={styles.tutarContainer}>
-          <Text style={styles.tutarStyle}>{amount}</Text>
+        <View style={styles.amountContainer}>
+          <CurrencyAmount amount={amount} currency={currency} />
         </View>
       </TouchableOpacity>
 
       <CardModal
         visible={modalVisible}
         onClose={handleCloseModal}
+        type={type}
+        account_type={account_type}
         title={title}
         description={description}
         amount={amount}
+        currency={currency}
+        repeat_frequency={repeat_frequency}
+        date={date}
+        note={note}
+        category={category}
         onSave={handleSave}
       />
     </>
@@ -77,7 +148,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 30,
   },
-  GelirGiderLogoContainer: {
+  imageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -91,15 +162,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
   },
-  GelirGiderLogoImage: {
+  image: {
     width: 40,
     height: 40,
   },
-  tutarStyle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  tutarContainer: {
+  amountContainer: {
     justifyContent: 'center',
     alignItems: 'center',
   }

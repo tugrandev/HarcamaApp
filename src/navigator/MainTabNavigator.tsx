@@ -15,7 +15,7 @@ const Tab = createBottomTabNavigator();
 
 const getTabBarIcon = (route, focused) => {
   let iconName;
-  let iconSize = 29;
+  let iconSize = 27;
   let IconComponent = Ionicons; // Varsayılan olarak Ionicons kullan
 
   if (route.name === 'Cüzdan') {
@@ -26,7 +26,7 @@ const getTabBarIcon = (route, focused) => {
     IconComponent = AntDesign;
   } else if (route.name === 'Ekle') {
     iconName = focused ? 'pluscircleo' : 'pluscircleo';
-    iconSize = 31;
+    iconSize = 29;
     IconComponent = AntDesign;
   } else if (route.name === 'Takvim') {
     iconName = focused ? 'calendar-clear-outline' : 'calendar-clear-outline';
