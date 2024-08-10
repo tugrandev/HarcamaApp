@@ -1,70 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, SafeAreaView, FlatList, Text, View, ActivityIndicator } from 'react-native';
+import { getExpensesByDate } from '../../database/database';
 import Card from '../../components/Card';
-import { initDB, getExpenses, updateExpense } from '../../database/database'; // Veritabanı işlemleri
-import GelirGiderLogo from '../../assets/images/icons/gelirikonu.svg'; // SVG ikonunuzu import edin
 
-const WalletScreen: React.FC = () => {
-  const [cardsData, setCardsData] = useState([]);
-  const [loading, setLoading] = useState(true); // Yüklenme durumunu takip eden değişken
+interface Expense {
+  id: number;
+  type: string;
+  account_type: string;
+  title: string;
+  description: string;
+  amount: number;
+  currency: string;
+  repeat_frequency: string;
+  date: string;
+  note: string;
+  category: string;
+}
+
+interface WalletScreenProps {
+  route: {
+    params?: {
+      selectedDate?: string;
+    };
+  };
+}
+
+const WalletScreen: React.FC<WalletScreenProps> = ({ route }) => {
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const selectedDate = route.params?.selectedDate || new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD' formatında tarih
 
   useEffect(() => {
-    const initializeDB = async () => {
-      try {
-        await initDB();
-        fetchData();
-      } catch (error) {
-        console.error("Database initialization error:", error);
-      }
-    };
+    fetchExpensesByDate(selectedDate);
+  }, [selectedDate]);
 
-    initializeDB();
-  }, []);
-
-  const fetchData = () => {
-    getExpenses((expenses) => {
-      const formattedExpenses = expenses.map((expense) => ({
-        id: expense.id,
-        type: expense.type,
-        account_type: expense.account_type,
-        title: expense.title,
-        description: expense.description,
-        amount: expense.amount ? expense.amount.toString() : "0", // amount değeri null ise "0" olarak göster
-        currency: expense.currency,
-        repeat_frequency: expense.repeat_frequency,
-        date: expense.date,
-        note: expense.note,
-        category: expense.category,
-        image: GelirGiderLogo, // SVG ikonunuzu buraya ekleyin
-      }));
-      setCardsData(formattedExpenses);
-      setLoading(false); // Veriler yüklendiğinde loading durumunu false yap
+  const fetchExpensesByDate = (date: string) => {
+    setLoading(true);
+    getExpensesByDate(date, (fetchedExpenses: Expense[]) => {
+      setExpenses(fetchedExpenses);
+      setLoading(false);
     });
-  };
-
-  const handleSave = (
-    id: number,
-    type: string,
-    account_type: string,
-    title: string,
-    description: string,
-    amount: string,
-    currency: string,
-    repeat_frequency: string,
-    date: string,
-    note: string,
-    category: string
-  ) => {
-    // Veritabanında güncelleme işlemi
-    updateExpense(id, type, account_type, title, parseFloat(amount), currency, repeat_frequency, date, note, category);
-    fetchData(); // Verileri yeniden çekmek için
   };
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>Liste boş</Text>
+      <Text style={styles.emptyText}>Bu tarihte veri bulunamadı.</Text>
     </View>
   );
+  
 
   if (loading) {
     return (
@@ -77,7 +61,7 @@ const WalletScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.background}>
       <FlatList
-        data={cardsData}
+        data={expenses}
         renderItem={({ item }) => (
           <Card
             id={item.id}
@@ -91,11 +75,9 @@ const WalletScreen: React.FC = () => {
             date={item.date}
             note={item.note}
             category={item.category}
-            image={item.image}
-            onSave={handleSave}
           />
         )}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={renderEmptyComponent}
       />
     </SafeAreaView>

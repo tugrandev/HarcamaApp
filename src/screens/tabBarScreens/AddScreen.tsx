@@ -1,38 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView, ScrollView } from 'react-native';
-import DatePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView, ScrollView, Platform } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import RNPickerSelect from 'react-native-picker-select';
 
 const SalaryDetailsScreen: React.FC = () => {
   const [isIncome, setIsIncome] = useState(true);
   const [account, setAccount] = useState('Maaş Hesabım');
-  const [amount, setAmount] = useState('25.000');
+  const [amount, setAmount] = useState('25000');
   const [currency, setCurrency] = useState('TRY');
   const [repeatFrequency, setRepeatFrequency] = useState('Sürekli');
   const [date, setDate] = useState(new Date('2024-07-25'));
   const [status, setStatus] = useState('Tamamlandı');
   const [note, setNote] = useState('Yeni dönem maaş');
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
-
-  const renderPicker = (
-    value: string,
-    setValue: (value: string) => void,
-    items: string[]
-  ) => (
-    <Picker
-      selectedValue={value}
-      onValueChange={(itemValue) => setValue(itemValue)}
-      style={styles.picker}
-    >
-      {items.map((item) => (
-        <Picker.Item key={item} label={item} value={item} />
-      ))}
-    </Picker>
-  );
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
-      
       <View style={styles.toggleContainer}>
         <TouchableOpacity
           style={[styles.toggleButton, isIncome && styles.activeToggle]}
@@ -52,7 +35,16 @@ const SalaryDetailsScreen: React.FC = () => {
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Hesaplarım</Text>
-            {renderPicker(account, setAccount, ['Maaş Hesabım', 'Diğer Hesap 1', 'Diğer Hesap 2'])}
+            <RNPickerSelect
+              onValueChange={(value) => setAccount(value)}
+              items={[
+                { label: 'Maaş Hesabım', value: 'Maaş Hesabım' },
+                { label: 'Diğer Hesap 1', value: 'Diğer Hesap 1' },
+                { label: 'Diğer Hesap 2', value: 'Diğer Hesap 2' },
+              ]}
+              value={account}
+              style={pickerSelectStyles}
+            />
           </View>
 
           <View style={styles.inputGroup}>
@@ -73,40 +65,69 @@ const SalaryDetailsScreen: React.FC = () => {
                 onChangeText={setAmount}
                 keyboardType="numeric"
               />
-              {renderPicker(currency, setCurrency, ['TRY', 'USD', 'EUR', 'GBP'])}
+              <RNPickerSelect
+                onValueChange={(value) => setCurrency(value)}
+                items={[
+                  { label: 'TRY', value: 'TRY' },
+                  { label: 'USD', value: 'USD' },
+                  { label: 'EUR', value: 'EUR' },
+                  { label: 'GBP', value: 'GBP' },
+                ]}
+                value={currency}
+                style={pickerSelectStyles}
+              />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Tekrar Sayısı</Text>
-            {renderPicker(repeatFrequency, setRepeatFrequency, ['Sürekli', 'Bir kez', 'Haftalık', 'Aylık', 'Yıllık'])}
+            <RNPickerSelect
+              onValueChange={(value) => setRepeatFrequency(value)}
+              items={[
+                { label: 'Sürekli', value: 'Sürekli' },
+                { label: 'Bir kez', value: 'Bir kez' },
+                { label: 'Haftalık', value: 'Haftalık' },
+                { label: 'Aylık', value: 'Aylık' },
+                { label: 'Yıllık', value: 'Yıllık' },
+              ]}
+              value={repeatFrequency}
+              style={pickerSelectStyles}
+            />
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Tarih</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={() => setDatePickerOpen(true)}>
+            <TouchableOpacity style={styles.dateButton} onPress={() => setDatePickerVisible(true)}>
               <Text>{date.toLocaleDateString('tr-TR')}</Text>
               <Text style={styles.calendarIcon}>📅</Text>
             </TouchableOpacity>
           </View>
 
-          {datePickerOpen && (
-            <DatePicker
-              value={date}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setDatePickerOpen(false);
-                if (selectedDate) {
-                  setDate(selectedDate);
-                }
-              }}
-            />
-          )}
+          <DateTimePickerModal
+            isVisible={datePickerVisible}
+            mode="date"
+            date={date}
+            onConfirm={(selectedDate) => {
+              setDatePickerVisible(false);
+              if (selectedDate) {
+                setDate(selectedDate);
+              }
+            }}
+            onCancel={() => setDatePickerVisible(false)}
+          />
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Durum</Text>
-            {renderPicker(status, setStatus, ['Tamamlandı', 'Beklemede', 'İptal Edildi'])}
+            <RNPickerSelect
+              onValueChange={(value) => setStatus(value)}
+              items={[
+                { label: 'Tamamlandı', value: 'Tamamlandı' },
+                { label: 'Beklemede', value: 'Beklemede' },
+                { label: 'İptal Edildi', value: 'İptal Edildi' },
+              ]}
+              value={status}
+              style={pickerSelectStyles}
+            />
           </View>
 
           <View style={styles.inputGroup}>
@@ -144,26 +165,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-  },
-  headerIcon: {
-    fontSize: 24,
-  },
-  iconButton: {
-    marginLeft: 16,
-  },
   toggleContainer: {
     flexDirection: 'row',
     backgroundColor: 'white',
@@ -200,10 +201,6 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: 'white',
     padding: 12,
-    borderRadius: 8,
-  },
-  picker: {
-    backgroundColor: 'white',
     borderRadius: 8,
   },
   amountContainer: {
@@ -260,5 +257,18 @@ const styles = StyleSheet.create({
     color: 'blue',
   },
 });
+
+const pickerSelectStyles = {
+  inputIOS: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+  },
+  inputAndroid: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+  },
+};
 
 export default SalaryDetailsScreen;
