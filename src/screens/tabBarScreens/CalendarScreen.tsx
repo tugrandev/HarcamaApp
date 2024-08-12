@@ -1,9 +1,8 @@
-// CalendarScreen.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { getExpenses } from '../../database/database'; // Lütfen doğru yolu belirtin
-import { Calendar, CalendarList, Agenda } from 'react-native-calendars';
+import { useFocusEffect } from '@react-navigation/native';
+import { getExpenses } from '../../database/database';
+import { Calendar } from 'react-native-calendars';
 import { format } from 'date-fns';
 
 interface Expense {
@@ -26,11 +25,14 @@ const CalendarScreen = () => {
   const [selectedExpenses, setSelectedExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    fetchExpenses();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchExpenses();
+    }, [])
+  );
 
   const fetchExpenses = () => {
+    setLoading(true);
     getExpenses((data) => {
       setExpenses(data);
       processDates(data);
@@ -40,26 +42,35 @@ const CalendarScreen = () => {
 
   const processDates = (data: Expense[]) => {
     const dates: any = {};
+  
     data.forEach((item) => {
       const formattedDate = format(new Date(item.date), 'yyyy-MM-dd');
-      if (dates[formattedDate]) {
+  
+      // Eğer bu tarihte bir gelir veya gider noktası zaten eklenmişse yeniden ekleme
+      if (!dates[formattedDate]) {
+        dates[formattedDate] = { dots: [] };
+      }
+  
+      // Gelir için yeşil nokta ekleme
+      if (item.type === 'Gelir' && !dates[formattedDate].dots.some((dot: any) => dot.color === 'green')) {
         dates[formattedDate].dots.push({
-          key: `${item.id}`,
-          color: item.type === 'Gelir' ? 'green' : 'red',
+          key: `gelir-${item.id}`,
+          color: 'green',
         });
-      } else {
-        dates[formattedDate] = {
-          dots: [
-            {
-              key: `${item.id}`,
-              color: item.type === 'Gelir' ? 'green' : 'red',
-            },
-          ],
-        };
+      }
+  
+      // Gider için kırmızı nokta ekleme
+      if (item.type === 'Gider' && !dates[formattedDate].dots.some((dot: any) => dot.color === 'red')) {
+        dates[formattedDate].dots.push({
+          key: `gider-${item.id}`,
+          color: 'red',
+        });
       }
     });
+  
     setMarkedDates(dates);
   };
+  
 
   const onDayPress = (day: any) => {
     setSelectedDate(day.dateString);

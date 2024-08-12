@@ -1,37 +1,135 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView, ScrollView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import RNPickerSelect from 'react-native-picker-select';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { insertExpense } from '../../database/database';
 
 const SalaryDetailsScreen: React.FC = () => {
-  const [isIncome, setIsIncome] = useState(true);
-  const [account, setAccount] = useState('Maaş Hesabım');
-  const [amount, setAmount] = useState('25000');
-  const [currency, setCurrency] = useState('TRY');
-  const [repeatFrequency, setRepeatFrequency] = useState('Sürekli');
-  const [date, setDate] = useState(new Date('2024-07-25'));
-  const [status, setStatus] = useState('Tamamlandı');
-  const [note, setNote] = useState('Yeni dönem maaş');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const isIncome = selectedIndex === 0;
+
+  const [account, setAccount] = useState('');
+  const [amount, setAmount] = useState('');
+  const [title, setTitle] = useState('');
+  const [currency, setCurrency] = useState('');
+  const [repeatFrequency, setRepeatFrequency] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [status, setStatus] = useState('');
+  const [note, setNote] = useState('');
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+
+  const [inputErrors, setInputErrors] = useState({
+    account: false,
+    amount: false,
+    title: false,
+    currency: false,
+    repeatFrequency: false,
+    date: false,
+    status: false,
+  });
+
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  const validateForm = () => {
+    const errors = {
+      account: !account,
+      amount: !amount,
+      title: !title,
+      currency: !currency,
+      repeatFrequency: !repeatFrequency,
+      date: !date,
+      status: !status,
+    };
+
+    setInputErrors(errors);
+
+    return !Object.values(errors).includes(true);
+  };
+
+  const resetForm = () => {
+    setAccount('');
+    setAmount('');
+    setTitle('');
+    setCurrency('');
+    setRepeatFrequency('');
+    setDate(new Date());
+    setStatus('');
+    setNote('');
+    setInputErrors({
+      account: false,
+      amount: false,
+      title: false,
+      currency: false,
+      repeatFrequency: false,
+      date: false,
+      status: false,
+    });
+  };
+
+  const saveExpense = () => {
+    if (validateForm()) {
+      const type = isIncome ? 'Gelir' : 'Gider';
+      const category = isIncome ? 'Gelir' : 'Gider';
+
+      insertExpense(
+        type,
+        account,
+        title,
+        parseFloat(amount),
+        currency,
+        repeatFrequency,
+        date.toISOString().split('T')[0],
+        note,
+        category
+      );
+
+      Alert.alert('Başarılı', 'Kayıt başarıyla tamamlandı.');
+      resetForm();
+    } else {
+      Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
+    }
+  };
+
+  useEffect(() => {
+    if (route.params?.save) {
+      saveExpense();
+      navigation.setParams({ save: false });
+    }
+  }, [route.params?.save]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.toggleButton, isIncome && styles.activeToggle]}
-          onPress={() => setIsIncome(true)}
-        >
-          <Text style={[styles.toggleText, isIncome && styles.activeToggleText]}>Gelir</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleButton, !isIncome && styles.activeToggle]}
-          onPress={() => setIsIncome(false)}
-        >
-          <Text style={[styles.toggleText, !isIncome && styles.activeToggleText]}>Gider</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollContainer}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContainer}
+        enableOnAndroid={true}
+        extraHeight={100}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[styles.segment, isIncome && styles.activeIncomeSegment]}
+            onPress={() => setSelectedIndex(0)}
+          >
+            <Text style={[styles.segmentText, isIncome && styles.activeSegmentText]}>Gelir</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segment, !isIncome && styles.activeExpenseSegment]}
+            onPress={() => setSelectedIndex(1)}
+          >
+            <Text style={[styles.segmentText, !isIncome && styles.activeSegmentText]}>Gider</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Hesaplarım</Text>
@@ -43,16 +141,19 @@ const SalaryDetailsScreen: React.FC = () => {
                 { label: 'Diğer Hesap 2', value: 'Diğer Hesap 2' },
               ]}
               value={account}
+              placeholder={{ label: 'Bir hesap seçin', value: null }}
               style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
             />
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Başlık</Text>
             <TextInput
-              style={styles.input}
-              value="Maaş Ödemesi"
-              onChangeText={(text) => {/* Handle title change */}}
+              style={[styles.input, inputErrors.title && styles.inputError]}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Başlık giriniz"
             />
           </View>
 
@@ -60,10 +161,11 @@ const SalaryDetailsScreen: React.FC = () => {
             <Text style={styles.label}>Tutar</Text>
             <View style={styles.amountContainer}>
               <TextInput
-                style={styles.amountInput}
+                style={[styles.amountInput, inputErrors.amount && styles.inputError]}
                 value={amount}
                 onChangeText={setAmount}
                 keyboardType="numeric"
+                placeholder="Tutar giriniz"
               />
               <RNPickerSelect
                 onValueChange={(value) => setCurrency(value)}
@@ -74,7 +176,9 @@ const SalaryDetailsScreen: React.FC = () => {
                   { label: 'GBP', value: 'GBP' },
                 ]}
                 value={currency}
+                placeholder={{ label: 'Para birimi seçin', value: null }}
                 style={pickerSelectStyles}
+                useNativeAndroidPickerStyle={false}
               />
             </View>
           </View>
@@ -84,20 +188,25 @@ const SalaryDetailsScreen: React.FC = () => {
             <RNPickerSelect
               onValueChange={(value) => setRepeatFrequency(value)}
               items={[
-                { label: 'Sürekli', value: 'Sürekli' },
                 { label: 'Bir kez', value: 'Bir kez' },
-                { label: 'Haftalık', value: 'Haftalık' },
                 { label: 'Aylık', value: 'Aylık' },
+                { label: 'Haftalık', value: 'Haftalık' },
                 { label: 'Yıllık', value: 'Yıllık' },
+                { label: 'Sürekli', value: 'Sürekli' },
               ]}
               value={repeatFrequency}
+              placeholder={{ label: 'Tekrar sıklığı seçin', value: null }}
               style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
             />
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Tarih</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={() => setDatePickerVisible(true)}>
+            <TouchableOpacity
+              style={[styles.dateButton, inputErrors.date && styles.inputError]}
+              onPress={() => setDatePickerVisible(true)}
+            >
               <Text>{date.toLocaleDateString('tr-TR')}</Text>
               <Text style={styles.calendarIcon}>📅</Text>
             </TouchableOpacity>
@@ -126,7 +235,9 @@ const SalaryDetailsScreen: React.FC = () => {
                 { label: 'İptal Edildi', value: 'İptal Edildi' },
               ]}
               value={status}
+              placeholder={{ label: 'Durum seçin', value: null }}
               style={pickerSelectStyles}
+              useNativeAndroidPickerStyle={false}
             />
           </View>
 
@@ -136,6 +247,7 @@ const SalaryDetailsScreen: React.FC = () => {
               style={styles.input}
               value={note}
               onChangeText={setNote}
+              placeholder="Not ekleyin"
               multiline
             />
           </View>
@@ -155,7 +267,7 @@ const SalaryDetailsScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };
@@ -167,26 +279,46 @@ const styles = StyleSheet.create({
   },
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    padding: 8,
-  },
-  toggleButton: {
-    flex: 1,
-    padding: 8,
-    alignItems: 'center',
-  },
-  activeToggle: {
     backgroundColor: '#e0e0e0',
-    borderRadius: 8,
+    padding: 4,
+    borderRadius: 20,
+    marginHorizontal: 16,
+    marginTop: 16,
   },
-  toggleText: {
-    fontSize: 16,
+  segment: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
   },
-  activeToggleText: {
+  activeIncomeSegment: {
+    backgroundColor: '#4CAF50',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activeExpenseSegment: {
+    backgroundColor: '#F44336',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  segmentText: {
+    fontSize: 14,
+    color: '#757575',
+  },
+  activeSegmentText: {
+    color: 'white',
     fontWeight: 'bold',
   },
   scrollContainer: {
-    flex: 1,
+    flexGrow: 1,
+    padding: 16,
   },
   formContainer: {
     padding: 16,
@@ -202,9 +334,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 12,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cccccc',
   },
   amountContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   amountInput: {
     flex: 1,
@@ -212,6 +347,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderTopLeftRadius: 8,
     borderBottomLeftRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cccccc',
+    marginRight: 5,
   },
   dateButton: {
     backgroundColor: 'white',
@@ -220,6 +358,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#cccccc',
   },
   calendarIcon: {
     fontSize: 20,
@@ -256,6 +396,9 @@ const styles = StyleSheet.create({
   addTagText: {
     color: 'blue',
   },
+  inputError: {
+    borderColor: 'red',
+  },
 });
 
 const pickerSelectStyles = {
@@ -263,11 +406,15 @@ const pickerSelectStyles = {
     backgroundColor: 'white',
     padding: 12,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cccccc',
   },
   inputAndroid: {
     backgroundColor: 'white',
     padding: 12,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cccccc',
   },
 };
 

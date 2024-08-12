@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, SafeAreaView, FlatList, Text, View, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { getExpensesByDate } from '../../database/database';
 import Card from '../../components/Card';
 
@@ -31,10 +32,6 @@ const WalletScreen: React.FC<WalletScreenProps> = ({ route }) => {
 
   const selectedDate = route.params?.selectedDate || new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD' formatında tarih
 
-  useEffect(() => {
-    fetchExpensesByDate(selectedDate);
-  }, [selectedDate]);
-
   const fetchExpensesByDate = (date: string) => {
     setLoading(true);
     getExpensesByDate(date, (fetchedExpenses: Expense[]) => {
@@ -43,12 +40,18 @@ const WalletScreen: React.FC<WalletScreenProps> = ({ route }) => {
     });
   };
 
+  // useFocusEffect kullanarak ekran odaklandığında verileri yenileyin
+  useFocusEffect(
+    useCallback(() => {
+      fetchExpensesByDate(selectedDate);
+    }, [selectedDate])
+  );
+
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyText}>Bu tarihte veri bulunamadı.</Text>
     </View>
   );
-  
 
   if (loading) {
     return (
@@ -79,6 +82,7 @@ const WalletScreen: React.FC<WalletScreenProps> = ({ route }) => {
         )}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={renderEmptyComponent}
+        contentContainerStyle={expenses.length === 0 ? styles.emptyContent : undefined} // Eklendi
       />
     </SafeAreaView>
   );
@@ -98,10 +102,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    height: '100%', // Eklendi: Mesajın tam ortada çıkması için
   },
   emptyText: {
     fontSize: 18,
     color: '#999',
+  },
+  emptyContent: {
+    flexGrow: 1, // Eklendi: Mesajın tam ortada çıkması için
+    justifyContent: 'center', // Eklendi: Mesajın tam ortada çıkması için
   },
 });
 

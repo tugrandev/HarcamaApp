@@ -135,7 +135,32 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen name="İstatistikler" component={StatsScreen} options={{ headerTitle: 'İstatistikler' }} />
-      <Tab.Screen name="Ekle" component={AddScreen} options={{ headerTitle: 'Ekle' }} />
+      <Tab.Screen
+        name="Ekle"
+        component={AddScreen}
+        options={({ navigation }) => ({
+          headerTitle: 'Ekle',
+          headerStyle: {
+            backgroundColor: colors.blue,
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => {
+                // Kaydet butonuna tıklandığında save parametresi ile birlikte Ekle ekranını tetikle
+                navigation.navigate('Ekle', { save: true });
+              }}
+              style={{ marginRight: 10 }}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Kaydet</Text>
+            </TouchableOpacity>
+          ),
+        })}
+      />
+
       <Tab.Screen name="Takvim" component={CalendarScreen} options={{ headerTitle: 'Takvim' }} />
       <Tab.Screen name="Ayarlar" component={SettingsScreen} options={{ headerTitle: 'Ayarlar' }} />
     </Tab.Navigator>

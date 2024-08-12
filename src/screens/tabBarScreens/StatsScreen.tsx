@@ -1,8 +1,7 @@
-// StatsScreen.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
-import { getExpenses } from '../../database/database'; // Lütfen doğru yolu belirtin
+import { useFocusEffect } from '@react-navigation/native';
+import { getExpenses } from '../../database/database';
 import { PieChart } from 'react-native-chart-kit';
 
 interface Expense {
@@ -25,11 +24,14 @@ const StatsScreen = () => {
   const [categoryBreakdown, setCategoryBreakdown] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    fetchExpenses();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchExpenses();
+    }, [])
+  );
 
   const fetchExpenses = () => {
+    setLoading(true);
     getExpenses((data) => {
       setExpenses(data);
       processData(data);
