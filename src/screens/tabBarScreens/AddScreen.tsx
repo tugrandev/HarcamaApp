@@ -13,25 +13,30 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { insertExpense } from '../../database/database';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import CategoryModal from '../../components/CategoryModal';
+import AccountBottomSheet from '../../components/AccountBottomSheet'; // Yeni bottom sheet bileşenini içeri aktar
 
-const SalaryDetailsScreen: React.FC = () => {
+const AddScreen: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const isIncome = selectedIndex === 0;
 
   const [account, setAccount] = useState('');
   const [amount, setAmount] = useState('');
-  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
   const [currency, setCurrency] = useState('');
   const [repeatFrequency, setRepeatFrequency] = useState('');
   const [date, setDate] = useState(new Date());
   const [status, setStatus] = useState('');
   const [note, setNote] = useState('');
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [accountModalVisible, setAccountModalVisible] = useState(false); // Bottom sheet görünürlüğü için state
 
   const [inputErrors, setInputErrors] = useState({
     account: false,
     amount: false,
-    title: false,
+    category: false,
     currency: false,
     repeatFrequency: false,
     date: false,
@@ -45,7 +50,7 @@ const SalaryDetailsScreen: React.FC = () => {
     const errors = {
       account: !account,
       amount: !amount,
-      title: !title,
+      category: !category,
       currency: !currency,
       repeatFrequency: !repeatFrequency,
       date: !date,
@@ -60,7 +65,7 @@ const SalaryDetailsScreen: React.FC = () => {
   const resetForm = () => {
     setAccount('');
     setAmount('');
-    setTitle('');
+    setCategory('');
     setCurrency('');
     setRepeatFrequency('');
     setDate(new Date());
@@ -69,7 +74,7 @@ const SalaryDetailsScreen: React.FC = () => {
     setInputErrors({
       account: false,
       amount: false,
-      title: false,
+      category: false,
       currency: false,
       repeatFrequency: false,
       date: false,
@@ -80,12 +85,11 @@ const SalaryDetailsScreen: React.FC = () => {
   const saveExpense = () => {
     if (validateForm()) {
       const type = isIncome ? 'Gelir' : 'Gider';
-      const category = isIncome ? 'Gelir' : 'Gider';
 
       insertExpense(
         type,
         account,
-        title,
+        category,
         parseFloat(amount),
         currency,
         repeatFrequency,
@@ -107,6 +111,12 @@ const SalaryDetailsScreen: React.FC = () => {
       navigation.setParams({ save: false });
     }
   }, [route.params?.save]);
+
+  const handleAccountSave = (newAccount: string) => {
+    // Yeni hesap kaydedildiğinde hesap listesine ekle ve bottom sheet'i kapat
+    setAccount(newAccount);
+    setAccountModalVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -133,35 +143,47 @@ const SalaryDetailsScreen: React.FC = () => {
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Hesaplarım</Text>
-            <RNPickerSelect
-              onValueChange={(value) => setAccount(value)}
-              items={[
-                { label: 'Maaş Hesabım', value: 'Maaş Hesabım' },
-                { label: 'Diğer Hesap 1', value: 'Diğer Hesap 1' },
-                { label: 'Diğer Hesap 2', value: 'Diğer Hesap 2' },
-              ]}
-              value={account}
-              placeholder={{ label: 'Bir hesap seçin', value: null }}
-              style={pickerSelectStyles}
-              useNativeAndroidPickerStyle={false}
-            />
+            <View style={styles.accountPickerContainer}>
+              <View style={styles.pickerWrapper}>
+                <RNPickerSelect
+                  onValueChange={(value) => setAccount(value)}
+                  items={[
+                    { label: 'Maaş Hesabım', value: 'Maaş Hesabım' },
+                    { label: 'Diğer Hesap 1', value: 'Diğer Hesap 1' },
+                    { label: 'Diğer Hesap 2', value: 'Diğer Hesap 2' },
+                  ]}
+                  value={account}
+                  placeholder={{ label: 'Bir hesap seçin', value: null }}
+                  style={pickerSelectStyles}
+                  useNativeAndroidPickerStyle={false}
+                />
+              </View>
+              <TouchableOpacity style={styles.addButton} onPress={() => setAccountModalVisible(true)}>
+                <View style={styles.addIconContainer}>
+                  <Ionicons name="add-circle-outline" size={24} color="blue" />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Başlık</Text>
-            <TextInput
-              style={[styles.input, inputErrors.title && styles.inputError]}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Başlık giriniz"
-            />
+            <Text style={styles.label}>Kategori</Text>
+            <TouchableOpacity
+              style={[styles.input, inputErrors.category && styles.inputError]}
+              onPress={() => setCategoryModalVisible(true)}
+            >
+              <Text>{category || "Kategori seçin"}</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Tutar</Text>
             <View style={styles.amountContainer}>
               <TextInput
-                style={[styles.amountInput, inputErrors.amount && styles.inputError]}
+                style={[
+                  styles.amountInput,
+                  inputErrors.amount && styles.inputError,
+                ]}
                 value={amount}
                 onChangeText={setAmount}
                 keyboardType="numeric"
@@ -170,13 +192,13 @@ const SalaryDetailsScreen: React.FC = () => {
               <RNPickerSelect
                 onValueChange={(value) => setCurrency(value)}
                 items={[
-                  { label: 'TRY', value: 'TRY' },
-                  { label: 'USD', value: 'USD' },
-                  { label: 'EUR', value: 'EUR' },
-                  { label: 'GBP', value: 'GBP' },
+                  { label: "TRY", value: "TRY" },
+                  { label: "USD", value: "USD" },
+                  { label: "EUR", value: "EUR" },
+                  { label: "GBP", value: "GBP" },
                 ]}
                 value={currency}
-                placeholder={{ label: 'Para birimi seçin', value: null }}
+                placeholder={{ label: "Para birimi seçin", value: null }}
                 style={pickerSelectStyles}
                 useNativeAndroidPickerStyle={false}
               />
@@ -188,14 +210,14 @@ const SalaryDetailsScreen: React.FC = () => {
             <RNPickerSelect
               onValueChange={(value) => setRepeatFrequency(value)}
               items={[
-                { label: 'Bir kez', value: 'Bir kez' },
-                { label: 'Aylık', value: 'Aylık' },
-                { label: 'Haftalık', value: 'Haftalık' },
-                { label: 'Yıllık', value: 'Yıllık' },
-                { label: 'Sürekli', value: 'Sürekli' },
+                { label: "Bir kez", value: "Bir kez" },
+                { label: "Aylık", value: "Aylık" },
+                { label: "Haftalık", value: "Haftalık" },
+                { label: "Yıllık", value: "Yıllık" },
+                { label: "Sürekli", value: "Sürekli" },
               ]}
               value={repeatFrequency}
-              placeholder={{ label: 'Tekrar sıklığı seçin', value: null }}
+              placeholder={{ label: "Tekrar sıklığı seçin", value: null }}
               style={pickerSelectStyles}
               useNativeAndroidPickerStyle={false}
             />
@@ -207,7 +229,7 @@ const SalaryDetailsScreen: React.FC = () => {
               style={[styles.dateButton, inputErrors.date && styles.inputError]}
               onPress={() => setDatePickerVisible(true)}
             >
-              <Text>{date.toLocaleDateString('tr-TR')}</Text>
+              <Text>{date.toLocaleDateString("tr-TR")}</Text>
               <Text style={styles.calendarIcon}>📅</Text>
             </TouchableOpacity>
           </View>
@@ -230,12 +252,12 @@ const SalaryDetailsScreen: React.FC = () => {
             <RNPickerSelect
               onValueChange={(value) => setStatus(value)}
               items={[
-                { label: 'Tamamlandı', value: 'Tamamlandı' },
-                { label: 'Beklemede', value: 'Beklemede' },
-                { label: 'İptal Edildi', value: 'İptal Edildi' },
+                { label: "Tamamlandı", value: "Tamamlandı" },
+                { label: "Beklemede", value: "Beklemede" },
+                { label: "İptal Edildi", value: "İptal Edildi" },
               ]}
               value={status}
-              placeholder={{ label: 'Durum seçin', value: null }}
+              placeholder={{ label: "Durum seçin", value: null }}
               style={pickerSelectStyles}
               useNativeAndroidPickerStyle={false}
             />
@@ -266,8 +288,21 @@ const SalaryDetailsScreen: React.FC = () => {
               <Text style={styles.addTagText}>Yeni etiket ekle</Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </KeyboardAwareScrollView>
+
+      <CategoryModal
+        visible={categoryModalVisible}
+        onClose={() => setCategoryModalVisible(false)}
+        onSelectCategory={(selectedCategory) => setCategory(selectedCategory)}
+      />
+
+      <AccountBottomSheet
+        isVisible={accountModalVisible}
+        onClose={() => setAccountModalVisible(false)}
+        onSave={handleAccountSave}
+      />
     </SafeAreaView>
   );
 };
@@ -275,11 +310,11 @@ const SalaryDetailsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   toggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#e0e0e0',
+    flexDirection: "row",
+    backgroundColor: "#e0e0e0",
     padding: 4,
     borderRadius: 20,
     marginHorizontal: 16,
@@ -288,21 +323,21 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 20,
   },
   activeIncomeSegment: {
-    backgroundColor: '#4CAF50',
-    shadowColor: '#000',
+    backgroundColor: "#4CAF50",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
   },
   activeExpenseSegment: {
-    backgroundColor: '#F44336',
-    shadowColor: '#000',
+    backgroundColor: "#F44336",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -310,11 +345,11 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontSize: 14,
-    color: '#757575',
+    color: "#757575",
   },
   activeSegmentText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   scrollContainer: {
     flexGrow: 1,
@@ -331,73 +366,94 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#cccccc',
+    borderColor: "#cccccc",
   },
   amountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   amountInput: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 12,
-    borderTopLeftRadius: 8,
-    borderBottomLeftRadius: 8,
     borderWidth: 1,
-    borderColor: '#cccccc',
+    borderRadius: 8,
+    borderColor: "#cccccc",
     marginRight: 5,
   },
   dateButton: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 12,
     borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#cccccc',
+    borderColor: "#cccccc",
   },
   calendarIcon: {
     fontSize: 20,
   },
+  accountPickerContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pickerWrapper: {
+    flex: 1, // Picker'ın tüm boşluğu kaplaması için
+  },
+  addButton: {
+    marginLeft: 8, // Butonu picker'a yaklaştırmak için margin ekleniyor
+  },
   tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginBottom: 8,
   },
+  addIconContainer: {
+    backgroundColor: "white",
+    padding: 8,
+    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#cccccc",
+  },
   tag: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: "#e8f5e9",
     borderRadius: 16,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginRight: 8,
     marginBottom: 8,
   },
   tagText: {
-    color: 'green',
+    color: "green",
     marginRight: 4,
   },
   closeIcon: {
-    color: 'green',
+    color: "green",
     fontSize: 16,
   },
   addTagButton: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   addTagText: {
-    color: 'blue',
+    color: "blue",
   },
   inputError: {
-    borderColor: 'red',
+    borderColor: "red",
   },
 });
 
@@ -418,4 +474,4 @@ const pickerSelectStyles = {
   },
 };
 
-export default SalaryDetailsScreen;
+export default AddScreen;

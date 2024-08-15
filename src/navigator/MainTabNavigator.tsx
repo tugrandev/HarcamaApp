@@ -3,9 +3,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { format, addDays, subDays, isToday, isYesterday, isTomorrow } from 'date-fns';
-import { tr } from 'date-fns/locale';
 import WalletScreen from '../screens/tabBarScreens/WalletScreen';
 import StatsScreen from '../screens/tabBarScreens/StatsScreen';
 import CalendarScreen from '../screens/tabBarScreens/CalendarScreen';
@@ -54,86 +51,7 @@ export default function MainTabNavigator() {
         },
       })}
     >
-      <Tab.Screen
-        name="Cüzdan"
-        component={WalletScreen}
-        options={({ navigation, route }) => {
-          const selectedDate = route.params?.selectedDate || new Date().toISOString().split('T')[0];
-          const date = new Date(selectedDate);
-          const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
-          let label;
-          if (isYesterday(date)) {
-            label = 'Dün';
-          } else if (isToday(date)) {
-            label = 'Bugün';
-          } else if (isTomorrow(date)) {
-            label = 'Yarın';
-          } else {
-            label = format(date, 'd MMMM', { locale: tr });
-          }
-
-          const showDatePicker = () => {
-            setDatePickerVisibility(true);
-          };
-
-          const hideDatePicker = () => {
-            setDatePickerVisibility(false);
-          };
-
-          const handleConfirm = (date) => {
-            const formattedDate = date.toISOString().split('T')[0];
-            navigation.setParams({ selectedDate: formattedDate });
-            hideDatePicker();
-          };
-
-          return {
-            headerTitle: () => (
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <Ionicons
-                  name="chevron-back-outline"
-                  size={24}
-                  color="#fff"
-                  onPress={() => {
-                    const prevDate = subDays(date, 1).toISOString().split('T')[0];
-                    navigation.setParams({ selectedDate: prevDate });
-                  }}
-                  style={{ marginLeft: 10 }}
-                />
-                <TouchableOpacity onPress={showDatePicker} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 18, color: '#fff', fontWeight: 'bold', marginRight: 5 }}>
-                    {label}
-                  </Text>
-                  <Ionicons name="chevron-down" size={20} color="#fff" />
-                </TouchableOpacity>
-                <Ionicons
-                  name="chevron-forward-outline"
-                  size={24}
-                  color="#fff"
-                  onPress={() => {
-                    const nextDate = addDays(date, 1).toISOString().split('T')[0];
-                    navigation.setParams({ selectedDate: nextDate });
-                  }}
-                  style={{ marginRight: 10 }}
-                />
-                <DateTimePickerModal
-                  isVisible={isDatePickerVisible}
-                  mode="date"
-                  onConfirm={handleConfirm}
-                  onCancel={hideDatePicker}
-                />
-              </View>
-            ),
-            headerStyle: {
-              backgroundColor: colors.blue,
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          };
-        }}
-      />
+      <Tab.Screen name="Cüzdan" component={WalletScreen} options={{ headerTitle: 'Cüzdan' }} />
       <Tab.Screen name="İstatistikler" component={StatsScreen} options={{ headerTitle: 'İstatistikler' }} />
       <Tab.Screen
         name="Ekle"
