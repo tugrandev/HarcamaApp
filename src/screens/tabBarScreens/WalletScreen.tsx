@@ -6,16 +6,15 @@ import Card from '../../components/Card';
 
 interface Expense {
   id: number;
-  type: string;
+  add_type: string;
   account_type: string;
-  title: string;
-  description: string;
+  category: string;
   amount: number;
   currency: string;
   repeat_frequency: string;
   date: string;
+  situation: string;
   note: string;
-  category: string;
 }
 
 interface WalletScreenProps {
@@ -68,10 +67,8 @@ const WalletScreen: React.FC<WalletScreenProps> = ({ route }) => {
         renderItem={({ item }) => (
           <Card
             id={item.id}
-            type={item.type}
+            add_type={item.add_type}
             account_type={item.account_type}
-            title={item.title}
-            description={item.description}
             amount={item.amount}
             currency={item.currency}
             repeat_frequency={item.repeat_frequency}

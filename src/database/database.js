@@ -46,6 +46,7 @@ export const createTables = () => {
           currency TEXT,
           repeat_frequency TEXT,
           date TEXT,
+          situation TEXT,
           note TEXT
         );`,
         [],
@@ -94,6 +95,7 @@ export const insertExpense = (
   currency,
   repeat_frequency,
   date,
+  situation,
   note,
   category,
 ) => {
@@ -103,7 +105,7 @@ export const insertExpense = (
 
   db.transaction(tx => {
     tx.executeSql(
-      'INSERT INTO Expenses (add_type, account_type, category, amount, currency, repeat_frequency, date, note) VALUES (?,?,?,?,?,?,?,?)',
+      'INSERT INTO Expenses (add_type, account_type, category, amount, currency, repeat_frequency, date, situation, note) VALUES (?,?,?,?,?,?,?,?,?)',
       [
         add_type,
         account_type,
@@ -112,6 +114,7 @@ export const insertExpense = (
         currency,
         repeat_frequency,
         date,
+        situation,
         note,
       ],
       (tx, results) => {
@@ -185,6 +188,7 @@ export const updateExpense = (
   currency,
   repeat_frequency,
   date,
+  situation,
   note,
 ) => {
   if (!db) {
@@ -193,7 +197,7 @@ export const updateExpense = (
 
   db.transaction(tx => {
     tx.executeSql(
-      'UPDATE Expenses SET add_type = ?, account_type = ?, category = ?, amount = ?, currency = ?, repeat_frequency = ?, date = ?, note = ?, WHERE id = ?',
+      'UPDATE Expenses SET add_type = ?, account_type = ?, category = ?, amount = ?, currency = ?, repeat_frequency = ?, date = ?, situation = ?, note = ?, WHERE id = ?',
       [
         add_type,
         account_type,
@@ -202,6 +206,7 @@ export const updateExpense = (
         currency,
         repeat_frequency,
         date,
+        situation,
         note,
       ],
       (tx, results) => {
