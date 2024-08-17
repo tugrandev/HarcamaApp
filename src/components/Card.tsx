@@ -43,17 +43,11 @@ const Card: React.FC<CardProps> = ({
   date,
   situation,
   note,
-  onSave
+  onSave,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handlePress = () => {
-    setModalVisible(true);
-  };
-
-  const handleCloseModal = () => {
-    setModalVisible(false);
-  };
+  const handlePress = () => setModalVisible(true);
 
   const handleSave = (
     new_add_type: string,
@@ -78,10 +72,9 @@ const Card: React.FC<CardProps> = ({
       new_situation,
       new_note,
     );
-    setModalVisible(false); // Modal'ı kapat
+    setModalVisible(false);
   };
 
-  // Gelir veya gider türüne göre ikonu seçin
   const IconComponent = add_type === 'Gelir' ? GelirIkonu : GiderIkonu;
 
   return (
@@ -103,7 +96,7 @@ const Card: React.FC<CardProps> = ({
 
       <CardModal
         visible={modalVisible}
-        onClose={handleCloseModal}
+        onClose={() => setModalVisible(false)}
         add_type={add_type}
         account_type={account_type}
         category={category}
@@ -148,21 +141,15 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 4,
   },
   note: {
-    marginTop: 8,
+    marginTop: 4,
     fontSize: 14,
-    marginBottom: 4,
-  },
-  image: {
-    width: 40,
-    height: 40,
   },
   amountContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-  }
+  },
 });
 
 export default Card;

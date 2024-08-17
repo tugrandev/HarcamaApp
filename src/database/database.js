@@ -17,6 +17,7 @@ export const initDB = () => {
       database => {
         db = database;
         console.log('Database opened');
+        clearAllDataFromAccounts();
         createTables()
           .then(() => resolve())
           .catch(error => reject(error));
@@ -36,6 +37,7 @@ export const createTables = () => {
 
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
+      // Expenses tablosu oluşturulması
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS Expenses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,10 +54,43 @@ export const createTables = () => {
         [],
         () => {
           console.log('Expenses table created successfully');
-          resolve();
         },
         err => {
           console.error('Error creating Expenses table: ', err);
+          reject(err);
+        },
+      );
+
+      // Accounts tablosu oluşturulması
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS Accounts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          account_name TEXT NOT NULL,
+          currency TEXT NOT NULL,
+          balance REAL DEFAULT 0
+        );`,
+        [],
+        () => {
+          console.log('Accounts table created successfully');
+          // 3 tane hazır hesap ekle
+          tx.executeSql(
+            `INSERT INTO Accounts (account_name, currency, balance) VALUES 
+            ('Maaş Hesabım', 'TRY', 1000),
+            ('Dolar Hesabım', 'USD', 200),
+            ('Euro Hesabım', 'EUR', 300);`,
+            [],
+            () => {
+              console.log('Default accounts added successfully');
+              resolve();
+            },
+            err => {
+              console.error('Error inserting default accounts: ', err);
+              reject(err);
+            },
+          );
+        },
+        err => {
+          console.error('Error creating Accounts table: ', err);
           reject(err);
         },
       );
@@ -63,8 +98,9 @@ export const createTables = () => {
   });
 };
 
-// Tüm verileri silme işlevi
-export const clearAllData = () => {
+
+// Tüm verileri silme işlevi (Expenses tablosu)
+export const clearAllDataFromExpenses = () => {
   if (!db) {
     throw new Error('Database is not initialized. Please call initDB first.');
   }
@@ -87,17 +123,40 @@ export const clearAllData = () => {
   });
 };
 
+export const clearAllDataFromAccounts = () => {
+  if (!db) {
+    throw new Error('Database is not initialized. Please call initDB first.');
+  }
+
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'DELETE FROM Accounts',
+        [],
+        () => {
+          console.log('All data deleted successfully');
+          resolve();
+        },
+        err => {
+          console.error('Error deleting all data: ', err);
+          reject(err);
+        },
+      );
+    });
+  });
+};
+
+// Harcama ekleme işlevi
 export const insertExpense = (
-  type,
+  add_type,
   account_type,
-  title,
+  category,
   amount,
   currency,
   repeat_frequency,
   date,
   situation,
   note,
-  category,
 ) => {
   if (!db) {
     throw new Error('Database is not initialized. Please call initDB first.');
@@ -131,6 +190,31 @@ export const insertExpense = (
   });
 };
 
+// Hesap ekleme işlevi
+export const insertAccount = (account_name, currency, balance = 0) => {
+  if (!db) {
+    throw new Error('Database is not initialized. Please call initDB first.');
+  }
+
+  db.transaction(tx => {
+    tx.executeSql(
+      'INSERT INTO Accounts (account_name, currency, balance) VALUES (?,?,?)',
+      [account_name, currency, balance],
+      (tx, results) => {
+        if (results.rowsAffected > 0) {
+          console.log('Account added successfully');
+        } else {
+          console.log('Failed to add account');
+        }
+      },
+      err => {
+        console.error('Error inserting account: ', err);
+      },
+    );
+  });
+};
+
+// Harcamaları getirme işlevi
 export const getExpenses = callback => {
   if (!db) {
     throw new Error('Database is not initialized. Please call initDB first.');
@@ -180,6 +264,32 @@ export const getExpensesByDate = (date, callback) => {
   });
 };
 
+// Hesapları getirme işlevi
+export const getAccounts = callback => {
+  if (!db) {
+    throw new Error('Database is not initialized. Please call initDB first.');
+  }
+
+  db.transaction(tx => {
+    tx.executeSql(
+      'SELECT * FROM Accounts',
+      [],
+      (tx, results) => {
+        const rows = results.rows;
+        let accounts = [];
+        for (let i = 0; i < rows.length; i++) {
+          accounts.push(rows.item(i));
+        }
+        callback(accounts);
+      },
+      err => {
+        console.error('Error fetching accounts: ', err);
+      },
+    );
+  });
+};
+
+// Harcama güncelleme işlevi
 export const updateExpense = (
   add_type,
   account_type,
@@ -197,7 +307,7 @@ export const updateExpense = (
 
   db.transaction(tx => {
     tx.executeSql(
-      'UPDATE Expenses SET add_type = ?, account_type = ?, category = ?, amount = ?, currency = ?, repeat_frequency = ?, date = ?, situation = ?, note = ?, WHERE id = ?',
+      'UPDATE Expenses SET add_type = ?, account_type = ?, category = ?, amount = ?, currency = ?, repeat_frequency = ?, date = ?, situation = ?, note = ? WHERE id = ?',
       [
         add_type,
         account_type,

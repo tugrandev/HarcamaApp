@@ -51,7 +51,7 @@ export default function MainTabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Cüzdan" component={WalletScreen} options={{ headerTitle: 'Cüzdan' }} />
+      <Tab.Screen name="Cüzdan" component={WalletScreen} options={{ headerShown: false }} />
       <Tab.Screen name="İstatistikler" component={StatsScreen} options={{ headerTitle: 'İstatistikler' }} />
       <Tab.Screen
         name="Ekle"

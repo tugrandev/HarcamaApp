@@ -26,9 +26,14 @@ const CategoryModal = ({ visible, onClose, onSelectCategory }) => {
       return;
     }
     const newCategoryItem = { label: newCategory, icon: 'pricetag-outline' }; // Varsayılan ikon
-    setCategories([...categories.slice(0, -1), newCategoryItem, categories[categories.length - 1]]); // "Ekle" butonu en son kalacak şekilde listeyi güncelle
+    const updatedCategories = [...categories.slice(0, -1), newCategoryItem, categories[categories.length - 1]]; // "Ekle" butonu en son kalacak şekilde listeyi güncelle
+    setCategories(updatedCategories);
     setNewCategory('');
     setAddModalVisible(false);
+
+    // Yeni eklenen kategoriyi seç ve ana modalı kapat
+    onSelectCategory(newCategoryItem.label);
+    onClose();
   };
 
   useEffect(() => {
@@ -98,7 +103,7 @@ const CategoryModal = ({ visible, onClose, onSelectCategory }) => {
                 onChangeText={setNewCategory}
               />
               <TouchableOpacity style={styles.addButton} onPress={handleAddCategory}>
-                <Ionicons name="checkmark-circle-outline" size={30} color="green" />
+                <Ionicons name="checkmark-circle-outline" size={27} color="green" />
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -170,10 +175,12 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderColor: '#cccccc',
-    borderRadius: 10,
-    marginBottom: 20,
+    borderRadius: 10
   },
   addButton: {
+    borderRadius: 10,
+    borderWidth : 1,
+    borderColor: '#cccccc',
     marginLeft: 10,
     padding: 5, // Butonun çevresindeki boşlukları küçültmek için padding azaltıldı
   },

@@ -39,7 +39,7 @@ const CardModal: React.FC<CardModalProps> = ({
   date,
   situation,
   note,
-  onSave
+  onSave,
 }) => {
   const [editadd_type, setEditadd_type] = useState(add_type);
   const [editAccountType, setEditAccountType] = useState(account_type);
@@ -127,13 +127,7 @@ const CardModal: React.FC<CardModalProps> = ({
             style={styles.input}
             value={editSituation}
             onChangeText={setEditSituation}
-            placeholder="Note"
-          />
-          <TextInput
-            style={styles.input}
-            value={editNote}
-            onChangeText={setEditNote}
-            placeholder="Note"
+            placeholder="Situation"
           />
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
